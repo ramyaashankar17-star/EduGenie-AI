@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>EduGenie AI</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>EduGenie AI</h1>
+
+        <p class="subtitle">
+            Your AI-Powered Learning Assistant
+        </p>
+
+        <div class="card">
+
+            <label for="task">Choose a task:</label>
+
+            <select id="task">
+                <option value="qa">Ask a Question</option>
+                <option value="explain">Explain a Topic</option>
+                <option value="quiz">Generate Quiz</option>
+                <option value="summarize">Summarize Text</option>
+                <option value="recommend">Learning Recommendations</option>
+            </select>
+
+
+            <label for="inputText">Enter your text:</label>
+
+            <textarea
+                id="inputText"
+                placeholder="Type your question, topic, or text here..."
+            ></textarea>
+
+
+            <button onclick="generateResponse()">
+                Generate
+            </button>
+
+        </div>
+
+
+        <div id="result" class="result">
+            <h2>Result</h2>
+            <p>Your result will appear here.</p>
+        </div>
+
+    </div>
+
+
+    <script>
+
+        async function generateResponse() {
+
+            const task = document.getElementById("task").value;
+            const text = document.getElementById("inputText").value.trim();
+            const result = document.getElementById("result");
+
+            if (!text) {
+                result.innerHTML = `
+                    <h2>Result</h2>
+                    <p>Please enter something first.</p>
+                `;
+                return;
+            }
+
+            result.innerHTML = `
+                <h2>Result</h2>
+                <p>Generating response...</p>
+            `;
+
+            let endpoint = "";
+
+            if (task === "qa") {
+                endpoint = "/qa";
+            }
+            else if (task === "explain") {
+                endpoint = "/explain";
+            }
+            else if (task === "quiz") {
+                endpoint = "/quiz";
+            }
+            else if (task === "summarize") {
+                endpoint = "/summarize";
+            }
+            else if (task === "recommend") {
+                endpoint = "/learn/recommendations";
+            }
+
+
+            try {
+
+                const response = await fetch(endpoint, {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        text: text
+                    })
+                });
+
+
+                const data = await response.json();
+
+
+                let output = data.result;
+
+
+                if (Array.isArray(output)) {
+
+                    output = output.map((item, index) => `
+                        <div class="quiz-question">
+
+                            <h3>
+                                ${index + 1}. ${item.question}
+                            </h3>
+
+                            <ul>
+                                ${item.options.map(option =>
+                                    `<li>${option}</li>`
+                                ).join("")}
+                            </ul>
+
+                            <p>
+                                <strong>Answer:</strong>
+                                ${item.answer}
+                            </p>
+
+                            <p>
+                                <strong>Explanation:</strong>
+                                ${item.explanation}
+                            </p>
+
+                        </div>
+                    `).join("");
+                }
+                else if (typeof output === "object") {
+
+                    output = `
+                        <pre>${JSON.stringify(output, null, 2)}</pre>
+                    `;
+                }
+                else {
+
+                    output = String(output).replace(/\n/g, "<br>");
+                }
+
+
+                result.innerHTML = `
+                    <h2>Result</h2>
+                    <div>${output}</div>
+                `;
+
+            }
+
+            catch (error) {
+
+                result.innerHTML = `
+                    <h2>Result</h2>
+                    <p>
+                        Something went wrong. Please try again.
+                    </p>
+                `;
+
+                console.error(error);
+            }
+        }
+
+    </script>
+
+</body>
+</html>
